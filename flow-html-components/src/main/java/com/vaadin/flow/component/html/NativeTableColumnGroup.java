@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.HtmlContainer;
 import com.vaadin.flow.component.Tag;
 
@@ -131,8 +132,8 @@ public class NativeTableColumnGroup extends HtmlContainer {
      * @return the list of {@code <col>} children.
      */
     public List<NativeTableColumn> getColumns() {
-        return getChildren().filter(c -> c instanceof NativeTableColumn)
-                .map(c -> (NativeTableColumn) c).collect(Collectors.toList());
+        return ComponentUtil.getChildrenOfType(this, NativeTableColumn.class)
+                .collect(Collectors.toList());
     }
 
     /**

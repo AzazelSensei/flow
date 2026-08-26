@@ -23,6 +23,7 @@ import java.util.Optional;
 
 import com.vaadin.flow.component.ClickNotifier;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.HtmlContainer;
 import com.vaadin.flow.component.Tag;
 
@@ -105,7 +106,8 @@ public class NativeTable extends HtmlContainer
      * @return an {@link Optional} containing the caption, or empty if none.
      */
     public Optional<NativeTableCaption> findCaption() {
-        return findChild(NativeTableCaption.class);
+        return ComponentUtil.getFirstChildOfType(this,
+                NativeTableCaption.class);
     }
 
     /**
@@ -211,7 +213,8 @@ public class NativeTable extends HtmlContainer
      * @return an unmodifiable list of column groups.
      */
     public List<NativeTableColumnGroup> getColumnGroups() {
-        return childrenOfType(NativeTableColumnGroup.class);
+        return ComponentUtil
+                .getChildrenOfType(this, NativeTableColumnGroup.class).toList();
     }
 
     /**
@@ -245,7 +248,7 @@ public class NativeTable extends HtmlContainer
      * @return an {@link Optional} containing the head, or empty if none.
      */
     public Optional<NativeTableHeader> findHead() {
-        return findChild(NativeTableHeader.class);
+        return ComponentUtil.getFirstChildOfType(this, NativeTableHeader.class);
     }
 
     /**
@@ -275,7 +278,7 @@ public class NativeTable extends HtmlContainer
      * @return an {@link Optional} containing the foot, or empty if none.
      */
     public Optional<NativeTableFooter> findFoot() {
-        return findChild(NativeTableFooter.class);
+        return ComponentUtil.getFirstChildOfType(this, NativeTableFooter.class);
     }
 
     /**
@@ -291,7 +294,8 @@ public class NativeTable extends HtmlContainer
      * @return an unmodifiable list of body elements.
      */
     public List<NativeTableBody> getBodies() {
-        return childrenOfType(NativeTableBody.class);
+        return ComponentUtil.getChildrenOfType(this, NativeTableBody.class)
+                .toList();
     }
 
     /**
@@ -301,7 +305,8 @@ public class NativeTable extends HtmlContainer
      * @return the first {@code <tbody>} element in the table.
      */
     public NativeTableBody getBody() {
-        return findChild(NativeTableBody.class).orElseGet(this::addBody);
+        return ComponentUtil.getFirstChildOfType(this, NativeTableBody.class)
+                .orElseGet(this::addBody);
     }
 
     /**
@@ -523,15 +528,6 @@ public class NativeTable extends HtmlContainer
      */
     public void addFooterRows(List<? extends NativeTableRow> rows) {
         getFoot().addRows(rows);
-    }
-
-    private <T extends Component> Optional<T> findChild(Class<T> type) {
-        return getChildren().filter(type::isInstance).map(type::cast)
-                .findFirst();
-    }
-
-    private <T extends Component> List<T> childrenOfType(Class<T> type) {
-        return getChildren().filter(type::isInstance).map(type::cast).toList();
     }
 
     /**

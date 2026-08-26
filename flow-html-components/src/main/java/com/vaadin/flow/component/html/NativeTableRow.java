@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 
 import com.vaadin.flow.component.ClickNotifier;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.HtmlContainer;
 import com.vaadin.flow.component.Tag;
 
@@ -176,8 +177,8 @@ public class NativeTableRow extends HtmlContainer
      * @return A list of all header cells in this row.
      */
     public List<NativeTableHeaderCell> getHeaderCells() {
-        return getChildren().filter(c -> c instanceof NativeTableHeaderCell)
-                .map(c -> (NativeTableHeaderCell) c).collect(Collectors.toList());
+        return ComponentUtil.getChildrenOfType(this, NativeTableHeaderCell.class)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -186,8 +187,8 @@ public class NativeTableRow extends HtmlContainer
      * @return A list of all data cells in this row.
      */
     public List<NativeTableCell> getDataCells() {
-        return getChildren().filter(c -> c instanceof NativeTableCell)
-                .map(c -> (NativeTableCell) c).collect(Collectors.toList());
+        return ComponentUtil.getChildrenOfType(this, NativeTableCell.class)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -200,8 +201,8 @@ public class NativeTableRow extends HtmlContainer
      * @return a list of all cells in this row.
      */
     public List<AbstractNativeTableCell> getCells() {
-        return getChildren().filter(c -> c instanceof AbstractNativeTableCell)
-                .map(c -> (AbstractNativeTableCell) c).collect(Collectors.toList());
+        return ComponentUtil.getChildrenOfType(this, AbstractNativeTableCell.class)
+                .collect(Collectors.toList());
     }
 
     /**
