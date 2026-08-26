@@ -18,9 +18,13 @@ package com.vaadin.flow.component.html;
 import java.beans.IntrospectionException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.ComponentUtil;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -75,7 +79,7 @@ class NativeTableTest extends ComponentTest {
     void getCaptionText_emptyWhenNoCaption() {
         var component = (NativeTable) getComponent();
         assertEquals("", component.getCaptionText());
-        assertTrue(component.findCaption().isEmpty());
+        assertTrue(child(component, NativeTableCaption.class).isEmpty());
     }
 
     @Test
@@ -93,7 +97,7 @@ class NativeTableTest extends ComponentTest {
         var caption = component.getCaption();
         component.removeCaption();
         assertTrue(caption.getParent().isEmpty());
-        assertTrue(component.findCaption().isEmpty());
+        assertTrue(child(component, NativeTableCaption.class).isEmpty());
     }
 
     @Test
@@ -121,7 +125,7 @@ class NativeTableTest extends ComponentTest {
         NativeTableHeader head = component.getHead();
         component.removeHead();
         assertTrue(head.getParent().isEmpty());
-        assertTrue(component.findHead().isEmpty());
+        assertTrue(child(component, NativeTableHeader.class).isEmpty());
     }
 
     @Test
@@ -139,7 +143,7 @@ class NativeTableTest extends ComponentTest {
         NativeTableFooter footer = component.getFoot();
         component.removeFoot();
         assertTrue(footer.getParent().isEmpty());
-        assertTrue(component.findFoot().isEmpty());
+        assertTrue(child(component, NativeTableFooter.class).isEmpty());
     }
 
     @Test
@@ -227,7 +231,7 @@ class NativeTableTest extends ComponentTest {
     void addRow_autoCreatesBody() {
         var table = (NativeTable) getComponent();
         NativeTableRow row = table.addRow();
-        assertTrue(table.findHead().isEmpty());
+        assertTrue(child(table, NativeTableHeader.class).isEmpty());
         assertEquals(1, table.getBodies().size());
         assertEquals(1, table.getBody().getRows().size());
         AssertUtils.assertEquals(table.getBody(), row.getParent().orElseThrow(),
@@ -249,7 +253,7 @@ class NativeTableTest extends ComponentTest {
     void addHeaderRow_autoCreatesThead() {
         var table = (NativeTable) getComponent();
         NativeTableRow row = table.addHeaderRow("Name", "Age");
-        assertTrue(table.findHead().isPresent());
+        assertTrue(child(table, NativeTableHeader.class).isPresent());
         assertEquals(1, table.getHead().getRows().size());
         assertEquals(2, row.getHeaderCells().size());
         assertEquals("Name", row.getHeaderCells().get(0).getText());
@@ -259,7 +263,7 @@ class NativeTableTest extends ComponentTest {
     void addFooterRow_autoCreatesTfoot() {
         var table = (NativeTable) getComponent();
         NativeTableRow row = table.addFooterRow("Total", "55");
-        assertTrue(table.findFoot().isPresent());
+        assertTrue(child(table, NativeTableFooter.class).isPresent());
         assertEquals(1, table.getFoot().getRows().size());
         assertEquals(2, row.getDataCells().size());
     }
@@ -421,9 +425,9 @@ class NativeTableTest extends ComponentTest {
 
         assertTrue(table.getRows().isEmpty());
         // Sections themselves remain
-        assertTrue(table.findHead().isPresent());
+        assertTrue(child(table, NativeTableHeader.class).isPresent());
         assertEquals(1, table.getBodies().size());
-        assertTrue(table.findFoot().isPresent());
+        assertTrue(child(table, NativeTableFooter.class).isPresent());
         assertEquals(0, table.getHead().getRows().size());
         assertEquals(0, table.getBody().getRows().size());
         assertEquals(0, table.getFoot().getRows().size());
@@ -443,7 +447,7 @@ class NativeTableTest extends ComponentTest {
         NativeTableBody body = new NativeTableBody();
         table.add(head, body);
 
-        assertEquals(head, table.findHead().orElse(null));
+        assertEquals(head, child(table, NativeTableHeader.class).orElse(null));
         assertEquals(List.of(body), table.getBodies());
         assertEquals(body, table.getBody());
     }
@@ -458,6 +462,11 @@ class NativeTableTest extends ComponentTest {
 
         assertEquals(0, table.indexOf(body));
         assertEquals(1, table.indexOf(foot));
+    }
+
+    private static <T extends Component> Optional<T> child(NativeTable table,
+            Class<T> type) {
+        return ComponentUtil.getFirstChildOfType(table, type);
     }
 
 }

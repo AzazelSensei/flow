@@ -68,7 +68,7 @@ public class NativeTableColumnGroup extends HtmlContainer {
      *            the columns to add.
      */
     public NativeTableColumnGroup(NativeTableColumn... columns) {
-        this(Arrays.asList(columns));
+        super(columns);
     }
 
     /**
@@ -78,8 +78,7 @@ public class NativeTableColumnGroup extends HtmlContainer {
      *            the columns to add.
      */
     public NativeTableColumnGroup(List<? extends NativeTableColumn> columns) {
-        super();
-        addColumns(columns);
+        super(columns.toArray(NativeTableColumn[]::new));
     }
 
     /**

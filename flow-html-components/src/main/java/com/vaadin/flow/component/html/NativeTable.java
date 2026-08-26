@@ -71,8 +71,7 @@ public class NativeTable extends HtmlContainer
      *            the children components.
      */
     public NativeTable(Component... components) {
-        super();
-        add(components);
+        super(components);
     }
 
     /**
@@ -82,8 +81,7 @@ public class NativeTable extends HtmlContainer
      *            the children components.
      */
     public NativeTable(List<? extends Component> components) {
-        super();
-        add(components.toArray(Component[]::new));
+        super(components.toArray(Component[]::new));
     }
 
     /**
@@ -98,16 +96,6 @@ public class NativeTable extends HtmlContainer
             addComponentAtIndex(insertionIndex(RANK_CAPTION), newCaption);
             return newCaption;
         });
-    }
-
-    /**
-     * Returns the caption component if one has been set.
-     *
-     * @return an {@link Optional} containing the caption, or empty if none.
-     */
-    public Optional<NativeTableCaption> findCaption() {
-        return ComponentUtil.getFirstChildOfType(this,
-                NativeTableCaption.class);
     }
 
     /**
@@ -243,15 +231,6 @@ public class NativeTable extends HtmlContainer
     }
 
     /**
-     * Returns the head if one has been set.
-     *
-     * @return an {@link Optional} containing the head, or empty if none.
-     */
-    public Optional<NativeTableHeader> findHead() {
-        return ComponentUtil.getFirstChildOfType(this, NativeTableHeader.class);
-    }
-
-    /**
      * Remove the head from this table, if present.
      */
     public void removeHead() {
@@ -270,15 +249,6 @@ public class NativeTable extends HtmlContainer
             addComponentAtIndex(insertionIndex(RANK_FOOT), newFoot);
             return newFoot;
         });
-    }
-
-    /**
-     * Returns the foot if one has been set.
-     *
-     * @return an {@link Optional} containing the foot, or empty if none.
-     */
-    public Optional<NativeTableFooter> findFoot() {
-        return ComponentUtil.getFirstChildOfType(this, NativeTableFooter.class);
     }
 
     /**
@@ -528,6 +498,19 @@ public class NativeTable extends HtmlContainer
      */
     public void addFooterRows(List<? extends NativeTableRow> rows) {
         getFoot().addRows(rows);
+    }
+
+    private Optional<NativeTableCaption> findCaption() {
+        return ComponentUtil.getFirstChildOfType(this,
+                NativeTableCaption.class);
+    }
+
+    private Optional<NativeTableHeader> findHead() {
+        return ComponentUtil.getFirstChildOfType(this, NativeTableHeader.class);
+    }
+
+    private Optional<NativeTableFooter> findFoot() {
+        return ComponentUtil.getFirstChildOfType(this, NativeTableFooter.class);
     }
 
     /**

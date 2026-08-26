@@ -52,8 +52,7 @@ public class NativeTableFooter extends HtmlContainer
      *            the rows to add.
      */
     public NativeTableFooter(NativeTableRow... rows) {
-        super();
-        addRows(rows);
+        super(rows);
     }
 
     /**
@@ -63,7 +62,6 @@ public class NativeTableFooter extends HtmlContainer
      *            the rows to add.
      */
     public NativeTableFooter(List<? extends NativeTableRow> rows) {
-        super();
-        addRows(rows);
+        super(rows.toArray(NativeTableRow[]::new));
     }
 }
