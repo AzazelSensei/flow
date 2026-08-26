@@ -15,18 +15,25 @@
  */
 package com.vaadin.flow.component.html;
 
+import java.util.List;
+
 import com.vaadin.flow.component.ClickNotifier;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.HtmlContainer;
 import com.vaadin.flow.component.Tag;
 
 /**
- * Component representing a <code>&lt;tfoot&gt;</code> element.
+ * Component representing a <code>&lt;tfoot&gt;</code> element — the footer
+ * section of a {@link NativeTable}.
+ * <p>
+ * Per the <a href="https://html.spec.whatwg.org/multipage/tables.html">WHATWG
+ * HTML specification</a>, a {@code <tfoot>} may only contain
+ * <code>&lt;tr&gt;</code> elements, so build its content through the
+ * {@link NativeTableRowContainer} row operations rather than the generic
+ * {@link HtmlContainer#add(Component...)} inherited from {@link HtmlContainer}.
  *
  * @since 24.5
- * @deprecated since 25.2; use {@link TableFoot} instead.
  */
-@Deprecated
 @Tag(Tag.TFOOT)
 public class NativeTableFooter extends HtmlContainer
         implements NativeTableRowContainer, ClickNotifier<NativeTableFooter> {
@@ -39,12 +46,24 @@ public class NativeTableFooter extends HtmlContainer
     }
 
     /**
-     * Creates a new table footer with the given children components.
+     * Creates a new table footer with the given rows.
      *
-     * @param components
-     *            the children components.
+     * @param rows
+     *            the rows to add.
      */
-    public NativeTableFooter(Component... components) {
-        super(components);
+    public NativeTableFooter(NativeTableRow... rows) {
+        super();
+        addRows(rows);
+    }
+
+    /**
+     * List equivalent of {@link #NativeTableFooter(NativeTableRow...)}.
+     *
+     * @param rows
+     *            the rows to add.
+     */
+    public NativeTableFooter(List<? extends NativeTableRow> rows) {
+        super();
+        addRows(rows);
     }
 }

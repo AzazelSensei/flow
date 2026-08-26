@@ -59,8 +59,7 @@ class NativeTableTest extends ComponentTest {
                 component.getChildren().findFirst().orElseThrow(),
                 "Caption is not the first child");
         AssertUtils.assertEquals(caption.getParent().orElseThrow(), component,
-                "Table is not the caption's father");
-
+                "NativeTable is not the caption's father");
     }
 
     @Test
@@ -73,7 +72,14 @@ class NativeTableTest extends ComponentTest {
     }
 
     @Test
-    void getCaptionText() {
+    void getCaptionText_emptyWhenNoCaption() {
+        var component = (NativeTable) getComponent();
+        assertEquals("", component.getCaptionText());
+        assertTrue(component.findCaption().isEmpty());
+    }
+
+    @Test
+    void getCaptionText_returnsCaptionText() {
         var component = (NativeTable) getComponent();
         String expectedText = "Test caption text.";
         var caption = component.getCaption();
@@ -87,6 +93,7 @@ class NativeTableTest extends ComponentTest {
         var caption = component.getCaption();
         component.removeCaption();
         assertTrue(caption.getParent().isEmpty());
+        assertTrue(component.findCaption().isEmpty());
     }
 
     @Test
@@ -114,6 +121,7 @@ class NativeTableTest extends ComponentTest {
         NativeTableHeader head = component.getHead();
         component.removeHead();
         assertTrue(head.getParent().isEmpty());
+        assertTrue(component.findHead().isEmpty());
     }
 
     @Test
@@ -131,6 +139,7 @@ class NativeTableTest extends ComponentTest {
         NativeTableFooter footer = component.getFoot();
         component.removeFoot();
         assertTrue(footer.getParent().isEmpty());
+        assertTrue(component.findFoot().isEmpty());
     }
 
     @Test
@@ -168,35 +177,25 @@ class NativeTableTest extends ComponentTest {
     }
 
     @Test
+    void addBodyBeforeFoot() {
+        var component = (NativeTable) getComponent();
+        component.getFoot();
+        var body = component.addBody();
+        assertEquals(0, component.getChildren().toList().indexOf(body));
+        assertEquals(1,
+                component.getChildren().toList().indexOf(component.getFoot()));
+    }
+
+    @Test
     void getBody() {
         var component = (NativeTable) getComponent();
         var body = component.getBody();
         assertEquals(1, component.getChildren().count());
-        // add a second body
         component.addBody();
         assertEquals(2, component.getChildren().count());
-        // subsequent calls should return the same first body
         var secondCallBody = component.getBody();
         AssertUtils.assertEquals(body, secondCallBody,
                 "No new body should've been created");
-    }
-
-    @Test
-    void getBodyByIndex() {
-        var component = (NativeTable) getComponent();
-        var body = component.getBody(0);
-        assertEquals(1, component.getChildren().count());
-        var secondCallBody = component.getBody(0);
-        assertEquals(1, component.getChildren().count());
-        AssertUtils.assertEquals(body, secondCallBody,
-                "No new body should've been created");
-    }
-
-    @Test
-    void getNonExistentBodyByIndex() {
-        var component = (NativeTable) getComponent();
-        assertThrows(IndexOutOfBoundsException.class,
-                () -> component.getBody(1));
     }
 
     @Test
@@ -213,31 +212,6 @@ class NativeTableTest extends ComponentTest {
     }
 
     @Test
-    void removeBody() {
-        var component = (NativeTable) getComponent();
-        for (int i = 0; i < 10; i++) {
-            component.addBody();
-        }
-        var bodies = component.getBodies();
-        for (int i = 0; i < 10; i++) {
-            component.removeBody();
-            assertTrue(bodies.get(i).getParent().isEmpty());
-        }
-    }
-
-    @Test
-    void removeBodyByIndex() {
-        var component = (NativeTable) getComponent();
-        var body0 = component.addBody();
-        var body1 = component.addBody();
-        var body2 = component.addBody();
-        component.removeBody(1);
-        assertTrue(body0.getParent().isPresent());
-        assertTrue(body1.getParent().isEmpty());
-        assertTrue(body2.getParent().isPresent());
-    }
-
-    @Test
     void removeBodyByReference() {
         var component = (NativeTable) getComponent();
         var body0 = component.addBody();
@@ -247,6 +221,243 @@ class NativeTableTest extends ComponentTest {
         assertTrue(body0.getParent().isPresent());
         assertTrue(body1.getParent().isEmpty());
         assertTrue(body2.getParent().isPresent());
+    }
+
+    @Test
+    void addRow_autoCreatesBody() {
+        var table = (NativeTable) getComponent();
+        NativeTableRow row = table.addRow();
+        assertTrue(table.findHead().isEmpty());
+        assertEquals(1, table.getBodies().size());
+        assertEquals(1, table.getBody().getRows().size());
+        AssertUtils.assertEquals(table.getBody(), row.getParent().orElseThrow(),
+                "row must live inside the auto-created tbody");
+    }
+
+    @Test
+    void addRow_withCellTexts_createsDataCells() {
+        var table = (NativeTable) getComponent();
+        NativeTableRow row = table.addRow("Alice", "30", "Blue");
+        assertEquals(3, row.getDataCells().size());
+        assertEquals("Alice", row.getDataCells().get(0).getText());
+        assertEquals("30", row.getDataCells().get(1).getText());
+        assertEquals("Blue", row.getDataCells().get(2).getText());
+        assertEquals(0, row.getHeaderCells().size());
+    }
+
+    @Test
+    void addHeaderRow_autoCreatesThead() {
+        var table = (NativeTable) getComponent();
+        NativeTableRow row = table.addHeaderRow("Name", "Age");
+        assertTrue(table.findHead().isPresent());
+        assertEquals(1, table.getHead().getRows().size());
+        assertEquals(2, row.getHeaderCells().size());
+        assertEquals("Name", row.getHeaderCells().get(0).getText());
+    }
+
+    @Test
+    void addFooterRow_autoCreatesTfoot() {
+        var table = (NativeTable) getComponent();
+        NativeTableRow row = table.addFooterRow("Total", "55");
+        assertTrue(table.findFoot().isPresent());
+        assertEquals(1, table.getFoot().getRows().size());
+        assertEquals(2, row.getDataCells().size());
+    }
+
+    @Test
+    void mdnTutorialStyleConstruction() {
+        // Mirrors the MDN "HTML table basics" walkthrough: caption, header
+        // row, body rows. Verifies the resulting structure is spec-compliant
+        // (caption first, thead before tbody) and that all rows landed in
+        // the right wrappers.
+        var table = (NativeTable) getComponent();
+        table.setCaptionText("People");
+        table.addHeaderRow("Name", "Age", "Color");
+        table.addRow("Alice", "30", "Blue");
+        table.addRow("Bob", "25", "Green");
+
+        assertEquals("People", table.getCaptionText());
+        assertEquals(1, table.getHead().getRows().size());
+        assertEquals(2, table.getBody().getRows().size());
+
+        var children = table.getChildren().toList();
+        assertEquals(table.getCaption(), children.get(0));
+        assertEquals(table.getHead(), children.get(1));
+        assertEquals(table.getBody(), children.get(2));
+    }
+
+    @Test
+    void addRows_addsExistingRowsToBody() {
+        var table = (NativeTable) getComponent();
+        var r1 = new NativeTableRow();
+        var r2 = new NativeTableRow();
+        table.addRows(r1, r2);
+        assertEquals(2, table.getBody().getRows().size());
+        AssertUtils.assertEquals(table.getBody(), r1.getParent().orElseThrow(),
+                "r1 must be a child of tbody");
+        AssertUtils.assertEquals(table.getBody(), r2.getParent().orElseThrow(),
+                "r2 must be a child of tbody");
+    }
+
+    @Test
+    void addCaption_createsAndAppendsComponents() {
+        var table = (NativeTable) getComponent();
+        var span = new Span("Cars");
+        var caption = table.addCaption(span);
+        assertEquals(1, caption.getComponentCount());
+        assertEquals(span, caption.getComponentAt(0));
+        assertEquals(table.getCaption(), caption);
+    }
+
+    @Test
+    void addColumnGroup_insertedAfterCaptionBeforeHead() {
+        var table = (NativeTable) getComponent();
+        table.getCaption();
+        table.getHead();
+        var group = table.addColumnGroup();
+        var children = table.getChildren().toList();
+        assertEquals(table.getCaption(), children.get(0));
+        assertEquals(group, children.get(1));
+        assertEquals(table.getHead(), children.get(2));
+    }
+
+    @Test
+    void addColumnGroup_beforeHeadEvenIfHeadAddedLater() {
+        var table = (NativeTable) getComponent();
+        var group = table.addColumnGroup();
+        var head = table.getHead();
+        var children = table.getChildren().toList();
+        assertEquals(group, children.get(0));
+        assertEquals(head, children.get(1));
+    }
+
+    @Test
+    void addColumnGroup_withColumns() {
+        var table = (NativeTable) getComponent();
+        var c1 = new NativeTableColumn();
+        var c2 = new NativeTableColumn(2);
+        var group = table.addColumnGroup(c1, c2);
+        assertEquals(2, group.getColumns().size());
+        assertEquals(List.of(group), table.getColumnGroups());
+    }
+
+    @Test
+    void multipleColumnGroups_appearInInsertionOrder() {
+        var table = (NativeTable) getComponent();
+        var g1 = table.addColumnGroup();
+        var g2 = table.addColumnGroup();
+        var children = table.getChildren().toList();
+        assertEquals(g1, children.get(0));
+        assertEquals(g2, children.get(1));
+    }
+
+    @Test
+    void removeColumnGroup() {
+        var table = (NativeTable) getComponent();
+        var g1 = table.addColumnGroup();
+        var g2 = table.addColumnGroup();
+        table.removeColumnGroup(g1);
+        assertEquals(List.of(g2), table.getColumnGroups());
+        assertTrue(g1.getParent().isEmpty());
+    }
+
+    @Test
+    void bodyAppendIndex_accountsForColumnGroups() {
+        // caption + 2 colgroups + thead → tbody must land at index 4
+        var table = (NativeTable) getComponent();
+        table.setCaptionText("x");
+        table.addColumnGroup();
+        table.addColumnGroup();
+        table.getHead();
+        var body = table.addBody();
+        assertEquals(4, table.getChildren().toList().indexOf(body));
+    }
+
+    @Test
+    void getRows_emptyWhenNoSections() {
+        var table = (NativeTable) getComponent();
+        assertTrue(table.getRows().isEmpty());
+    }
+
+    @Test
+    void getRows_returnsHeadBodiesFootInOrder() {
+        var table = (NativeTable) getComponent();
+        var headRow = table.addHeaderRow("Name");
+        var bodyRow1 = table.addRow("Alice");
+        var bodyRow2 = table.addRow("Bob");
+        var footRow = table.addFooterRow("Total");
+
+        var rows = table.getRows();
+        assertEquals(List.of(headRow, bodyRow1, bodyRow2, footRow), rows);
+    }
+
+    @Test
+    void getRows_concatenatesMultipleBodies() {
+        var table = (NativeTable) getComponent();
+        var b1Row = table.getBody().addRow();
+        var b2Row = table.addBody().addRow();
+        var rows = table.getRows();
+        assertEquals(List.of(b1Row, b2Row), rows);
+    }
+
+    @Test
+    void getRows_isUnmodifiable() {
+        var table = (NativeTable) getComponent();
+        table.addRow();
+        var rows = table.getRows();
+        assertThrows(UnsupportedOperationException.class,
+                () -> rows.add(new NativeTableRow()));
+    }
+
+    @Test
+    void removeAllRows_clearsRowsButKeepsSections() {
+        var table = (NativeTable) getComponent();
+        table.addHeaderRow("h");
+        table.addRow("b1");
+        table.addRow("b2");
+        table.addFooterRow("f");
+
+        table.removeAllRows();
+
+        assertTrue(table.getRows().isEmpty());
+        // Sections themselves remain
+        assertTrue(table.findHead().isPresent());
+        assertEquals(1, table.getBodies().size());
+        assertTrue(table.findFoot().isPresent());
+        assertEquals(0, table.getHead().getRows().size());
+        assertEquals(0, table.getBody().getRows().size());
+        assertEquals(0, table.getFoot().getRows().size());
+    }
+
+    @Test
+    void removeAllRows_isNoOpOnEmptyTable() {
+        var table = (NativeTable) getComponent();
+        table.removeAllRows();
+        assertTrue(table.getRows().isEmpty());
+    }
+
+    @Test
+    void sectionsAddedAsPlainChildren_areFoundByAccessors() {
+        var table = (NativeTable) getComponent();
+        NativeTableHeader head = new NativeTableHeader();
+        NativeTableBody body = new NativeTableBody();
+        table.add(head, body);
+
+        assertEquals(head, table.findHead().orElse(null));
+        assertEquals(List.of(body), table.getBodies());
+        assertEquals(body, table.getBody());
+    }
+
+    @Test
+    void addBody_afterGenericallyAddedFoot_isInsertedBeforeIt() {
+        var table = (NativeTable) getComponent();
+        NativeTableFooter foot = new NativeTableFooter();
+        table.add(foot);
+
+        NativeTableBody body = table.addBody();
+
+        assertEquals(0, table.indexOf(body));
+        assertEquals(1, table.indexOf(foot));
     }
 
 }

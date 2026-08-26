@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class TableColumnTest extends ComponentTest {
+class NativeTableColumnTest extends ComponentTest {
     // Actual test methods in super class
 
     @Override
@@ -31,13 +31,13 @@ class TableColumnTest extends ComponentTest {
 
     @Test
     void defaultSpanIsOne() {
-        TableColumn col = (TableColumn) getComponent();
+        NativeTableColumn col = (NativeTableColumn) getComponent();
         assertEquals(1, col.getSpan());
     }
 
     @Test
     void setSpan_writesAttribute() {
-        TableColumn col = (TableColumn) getComponent();
+        NativeTableColumn col = (NativeTableColumn) getComponent();
         col.setSpan(3);
         assertEquals("3", col.getElement().getAttribute("span"));
         assertEquals(3, col.getSpan());
@@ -45,14 +45,14 @@ class TableColumnTest extends ComponentTest {
 
     @Test
     void setSpan_rejectsNonPositive() {
-        TableColumn col = (TableColumn) getComponent();
+        NativeTableColumn col = (NativeTableColumn) getComponent();
         assertThrows(IllegalArgumentException.class, () -> col.setSpan(0));
         assertThrows(IllegalArgumentException.class, () -> col.setSpan(-1));
     }
 
     @Test
     void resetSpan_removesAttribute() {
-        TableColumn col = (TableColumn) getComponent();
+        NativeTableColumn col = (NativeTableColumn) getComponent();
         col.setSpan(4);
         col.resetSpan();
         assertNull(col.getElement().getAttribute("span"));
@@ -61,7 +61,7 @@ class TableColumnTest extends ComponentTest {
 
     @Test
     void spanConstructor() {
-        TableColumn col = new TableColumn(5);
+        NativeTableColumn col = new NativeTableColumn(5);
         assertEquals(5, col.getSpan());
     }
 }

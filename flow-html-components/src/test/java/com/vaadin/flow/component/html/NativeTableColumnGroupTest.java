@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class TableColumnGroupTest extends ComponentTest {
+class NativeTableColumnGroupTest extends ComponentTest {
     // Property tests in super class
 
     @Override
@@ -34,27 +34,27 @@ class TableColumnGroupTest extends ComponentTest {
 
     @Test
     void addColumn_appendsChild() {
-        TableColumnGroup group = (TableColumnGroup) getComponent();
-        TableColumn col = group.addColumn();
+        NativeTableColumnGroup group = (NativeTableColumnGroup) getComponent();
+        NativeTableColumn col = group.addColumn();
         assertEquals(1, group.getColumns().size());
         assertEquals(group, col.getParent().orElseThrow());
     }
 
     @Test
     void addColumnWithSpan_appendsChildWithSpan() {
-        TableColumnGroup group = (TableColumnGroup) getComponent();
-        TableColumn col = group.addColumn(2);
+        NativeTableColumnGroup group = (NativeTableColumnGroup) getComponent();
+        NativeTableColumn col = group.addColumn(2);
         assertEquals(2, col.getSpan());
         assertEquals(1, group.getColumns().size());
     }
 
     @Test
     void addColumns_appendsExistingColumns() {
-        TableColumnGroup group = (TableColumnGroup) getComponent();
-        TableColumn c1 = new TableColumn();
-        TableColumn c2 = new TableColumn(3);
+        NativeTableColumnGroup group = (NativeTableColumnGroup) getComponent();
+        NativeTableColumn c1 = new NativeTableColumn();
+        NativeTableColumn c2 = new NativeTableColumn(3);
         group.addColumns(c1, c2);
-        List<TableColumn> columns = group.getColumns();
+        List<NativeTableColumn> columns = group.getColumns();
         assertEquals(2, columns.size());
         assertEquals(c1, columns.get(0));
         assertEquals(c2, columns.get(1));
@@ -62,16 +62,16 @@ class TableColumnGroupTest extends ComponentTest {
 
     @Test
     void varargsConstructor() {
-        TableColumn c1 = new TableColumn();
-        TableColumn c2 = new TableColumn(2);
-        TableColumnGroup group = new TableColumnGroup(c1, c2);
+        NativeTableColumn c1 = new NativeTableColumn();
+        NativeTableColumn c2 = new NativeTableColumn(2);
+        NativeTableColumnGroup group = new NativeTableColumnGroup(c1, c2);
         assertEquals(2, group.getColumns().size());
     }
 
     @Test
     void removeColumn() {
-        TableColumnGroup group = (TableColumnGroup) getComponent();
-        TableColumn c = group.addColumn();
+        NativeTableColumnGroup group = (NativeTableColumnGroup) getComponent();
+        NativeTableColumn c = group.addColumn();
         group.removeColumn(c);
         assertTrue(group.getColumns().isEmpty());
         assertTrue(c.getParent().isEmpty());
@@ -79,7 +79,7 @@ class TableColumnGroupTest extends ComponentTest {
 
     @Test
     void removeAllColumns() {
-        TableColumnGroup group = (TableColumnGroup) getComponent();
+        NativeTableColumnGroup group = (NativeTableColumnGroup) getComponent();
         group.addColumn();
         group.addColumn();
         group.addColumn();
@@ -89,7 +89,7 @@ class TableColumnGroupTest extends ComponentTest {
 
     @Test
     void setSpan_writesAttribute() {
-        TableColumnGroup group = (TableColumnGroup) getComponent();
+        NativeTableColumnGroup group = (NativeTableColumnGroup) getComponent();
         group.setSpan(4);
         assertEquals("4", group.getElement().getAttribute("span"));
         assertEquals(4, group.getSpan());
@@ -97,13 +97,13 @@ class TableColumnGroupTest extends ComponentTest {
 
     @Test
     void setSpan_rejectsNonPositive() {
-        TableColumnGroup group = (TableColumnGroup) getComponent();
+        NativeTableColumnGroup group = (NativeTableColumnGroup) getComponent();
         assertThrows(IllegalArgumentException.class, () -> group.setSpan(0));
     }
 
     @Test
     void resetSpan_removesAttribute() {
-        TableColumnGroup group = (TableColumnGroup) getComponent();
+        NativeTableColumnGroup group = (NativeTableColumnGroup) getComponent();
         group.setSpan(2);
         group.resetSpan();
         assertNull(group.getElement().getAttribute("span"));

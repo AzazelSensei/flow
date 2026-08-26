@@ -25,10 +25,10 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.HtmlContainer;
 
 /**
- * Common superclass for table cell components ({@link TableDataCell} and
- * {@link TableHeaderCell}). Provides shared support for the attributes that
- * apply equally to <code>&lt;td&gt;</code> and <code>&lt;th&gt;</code> per the
- * <a href="https://html.spec.whatwg.org/multipage/tables.html">WHATWG HTML
+ * Common superclass for table cell components ({@link NativeTableCell} and
+ * {@link NativeTableHeaderCell}). Provides shared support for the attributes
+ * that apply equally to <code>&lt;td&gt;</code> and <code>&lt;th&gt;</code> per
+ * the <a href="https://html.spec.whatwg.org/multipage/tables.html">WHATWG HTML
  * specification</a>: {@code colspan}, {@code rowspan} and {@code headers}.
  *
  * @see <a href=
@@ -39,7 +39,7 @@ import com.vaadin.flow.component.HtmlContainer;
  *      &lt;th&gt;</a>
  * @since 25.2
  */
-public abstract class TableCell extends HtmlContainer {
+public abstract class AbstractNativeTableCell extends HtmlContainer {
 
     private static final String ATTRIBUTE_COLSPAN = "colspan";
     private static final String ATTRIBUTE_ROWSPAN = "rowspan";
@@ -48,7 +48,7 @@ public abstract class TableCell extends HtmlContainer {
     /**
      * Creates a new empty cell component.
      */
-    protected TableCell() {
+    protected AbstractNativeTableCell() {
         super();
     }
 
@@ -58,17 +58,17 @@ public abstract class TableCell extends HtmlContainer {
      * @param components
      *            the children components.
      */
-    protected TableCell(Component... components) {
+    protected AbstractNativeTableCell(Component... components) {
         super(components);
     }
 
     /**
-     * List equivalent of {@link #TableCell(Component...)}.
+     * List equivalent of {@link #AbstractNativeTableCell(Component...)}.
      *
      * @param components
      *            the children components.
      */
-    protected TableCell(List<? extends Component> components) {
+    protected AbstractNativeTableCell(List<? extends Component> components) {
         super(components.toArray(Component[]::new));
     }
 
@@ -150,8 +150,9 @@ public abstract class TableCell extends HtmlContainer {
      * Sets the {@code headers} attribute — a list of ids referring to the
      * <code>&lt;th&gt;</code> cells that label this cell. Assistive
      * technologies use it to read out the right headers when navigating complex
-     * tables, where {@link TableHeaderCell#setScope(TableHeaderCell.Scope)
-     * scope} alone isn't enough to disambiguate.
+     * tables, where
+     * {@link NativeTableHeaderCell#setScope(NativeTableHeaderCell.Scope) scope}
+     * alone isn't enough to disambiguate.
      * <p>
      * Passing no arguments (or an empty array) removes the attribute.
      *
@@ -189,26 +190,27 @@ public abstract class TableCell extends HtmlContainer {
      * @throws IllegalArgumentException
      *             if any of the given cells does not have an id set.
      */
-    public void setHeaders(TableHeaderCell... headerCells) {
+    public void setHeaders(NativeTableHeaderCell... headerCells) {
         setHeadersByCells(
                 headerCells == null ? List.of() : Arrays.asList(headerCells));
     }
 
     /**
-     * List equivalent of {@link #setHeaders(TableHeaderCell...)}.
+     * List equivalent of {@link #setHeaders(NativeTableHeaderCell...)}.
      *
      * @param headerCells
      *            the header cells whose ids should be referenced.
      * @throws IllegalArgumentException
      *             if any of the given cells does not have an id set.
      */
-    public void setHeadersByCells(List<? extends TableHeaderCell> headerCells) {
+    public void setHeadersByCells(
+            List<? extends NativeTableHeaderCell> headerCells) {
         if (headerCells == null || headerCells.isEmpty()) {
             getElement().removeAttribute(ATTRIBUTE_HEADERS);
             return;
         }
         List<String> ids = new ArrayList<>(headerCells.size());
-        for (TableHeaderCell cell : headerCells) {
+        for (NativeTableHeaderCell cell : headerCells) {
             ids.add(cell.getId().orElseThrow(() -> new IllegalArgumentException(
                     "Header cell must have an id to be referenced via the headers attribute")));
         }

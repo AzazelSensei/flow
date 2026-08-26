@@ -19,14 +19,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.vaadin.flow.component.HtmlComponent;
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.HtmlContainer;
 import com.vaadin.flow.component.Tag;
 
 /**
  * Component representing a <code>&lt;colgroup&gt;</code> element — a group of
- * columns inside a {@link Table}, used to apply attributes (most often a class
- * for CSS) to several columns at once. Only a limited subset of CSS applies to
- * column groups: {@code background}, {@code border} (with
+ * columns inside a {@link NativeTable}, used to apply attributes (most often a
+ * class for CSS) to several columns at once. Only a limited subset of CSS
+ * applies to column groups: {@code background}, {@code border} (with
  * {@code border-collapse: collapse}), {@code visibility: collapse} and
  * {@code width}.
  * <p>
@@ -34,13 +35,13 @@ import com.vaadin.flow.component.Tag;
  * HTML specification</a>, a {@code <colgroup>} is used in one of two modes:
  * either it carries a {@code span} attribute and has no children, or it
  * contains zero or more {@code <col>} children and has no {@code span}
- * attribute. This component therefore extends {@link HtmlComponent} (rather
- * than {@link com.vaadin.flow.component.HtmlContainer}) and exposes only
- * operations for managing {@link TableColumn} children plus the {@code span}
- * attribute. {@code <colgroup>} elements must be placed after the optional
+ * attribute. Manage its {@code <col>} children through the
+ * {@link NativeTableColumn} operations below rather than the generic
+ * {@link HtmlContainer#add(Component...)} inherited from {@link HtmlContainer}.
+ * {@code <colgroup>} elements must be placed after the optional
  * {@code <caption>} and before any {@code <thead>}, {@code <tbody>},
- * {@code <tfoot>} or <code>&lt;tr&gt;</code>; the {@link Table} inserts them at
- * the correct position automatically.
+ * {@code <tfoot>} or <code>&lt;tr&gt;</code>; the {@link NativeTable} inserts
+ * them at the correct position automatically.
  *
  * @see <a href=
  *      "https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/colgroup">MDN:
@@ -48,14 +49,14 @@ import com.vaadin.flow.component.Tag;
  * @since 25.2
  */
 @Tag(Tag.COLGROUP)
-public class TableColumnGroup extends HtmlComponent {
+public class NativeTableColumnGroup extends HtmlContainer {
 
     private static final String ATTRIBUTE_SPAN = "span";
 
     /**
      * Creates a new empty column group.
      */
-    public TableColumnGroup() {
+    public NativeTableColumnGroup() {
         super();
     }
 
@@ -65,17 +66,17 @@ public class TableColumnGroup extends HtmlComponent {
      * @param columns
      *            the columns to add.
      */
-    public TableColumnGroup(TableColumn... columns) {
+    public NativeTableColumnGroup(NativeTableColumn... columns) {
         this(Arrays.asList(columns));
     }
 
     /**
-     * List equivalent of {@link #TableColumnGroup(TableColumn...)}.
+     * List equivalent of {@link #NativeTableColumnGroup(NativeTableColumn...)}.
      *
      * @param columns
      *            the columns to add.
      */
-    public TableColumnGroup(List<? extends TableColumn> columns) {
+    public NativeTableColumnGroup(List<? extends NativeTableColumn> columns) {
         super();
         addColumns(columns);
     }
@@ -85,9 +86,9 @@ public class TableColumnGroup extends HtmlComponent {
      *
      * @return the new column.
      */
-    public TableColumn addColumn() {
-        TableColumn column = new TableColumn();
-        getElement().appendChild(column.getElement());
+    public NativeTableColumn addColumn() {
+        NativeTableColumn column = new NativeTableColumn();
+        add(column);
         return column;
     }
 
@@ -98,9 +99,9 @@ public class TableColumnGroup extends HtmlComponent {
      *            the number of columns to span.
      * @return the new column.
      */
-    public TableColumn addColumn(int span) {
-        TableColumn column = new TableColumn(span);
-        getElement().appendChild(column.getElement());
+    public NativeTableColumn addColumn(int span) {
+        NativeTableColumn column = new NativeTableColumn(span);
+        add(column);
         return column;
     }
 
@@ -110,20 +111,18 @@ public class TableColumnGroup extends HtmlComponent {
      * @param columns
      *            the columns to add.
      */
-    public void addColumns(TableColumn... columns) {
+    public void addColumns(NativeTableColumn... columns) {
         addColumns(Arrays.asList(columns));
     }
 
     /**
-     * List equivalent of {@link #addColumns(TableColumn...)}.
+     * List equivalent of {@link #addColumns(NativeTableColumn...)}.
      *
      * @param columns
      *            the columns to add.
      */
-    public void addColumns(List<? extends TableColumn> columns) {
-        for (TableColumn column : columns) {
-            getElement().appendChild(column.getElement());
-        }
+    public void addColumns(List<? extends NativeTableColumn> columns) {
+        add(columns.toArray(NativeTableColumn[]::new));
     }
 
     /**
@@ -131,9 +130,9 @@ public class TableColumnGroup extends HtmlComponent {
      *
      * @return the list of {@code <col>} children.
      */
-    public List<TableColumn> getColumns() {
-        return getChildren().filter(c -> c instanceof TableColumn)
-                .map(c -> (TableColumn) c).collect(Collectors.toList());
+    public List<NativeTableColumn> getColumns() {
+        return getChildren().filter(c -> c instanceof NativeTableColumn)
+                .map(c -> (NativeTableColumn) c).collect(Collectors.toList());
     }
 
     /**
@@ -142,20 +141,20 @@ public class TableColumnGroup extends HtmlComponent {
      * @param column
      *            the column to remove.
      */
-    public void removeColumn(TableColumn column) {
-        getElement().removeChild(column.getElement());
+    public void removeColumn(NativeTableColumn column) {
+        remove(column);
     }
 
     /**
      * Removes all columns from this group.
      */
     public void removeAllColumns() {
-        getElement().removeAllChildren();
+        removeAll();
     }
 
     /**
      * Sets the {@code span} attribute — how many consecutive columns this group
-     * covers when used without {@link TableColumn} children. Per the HTML
+     * covers when used without {@link NativeTableColumn} children. Per the HTML
      * specification, {@code span} is only valid on a {@code <colgroup>} that
      * has no {@code <col>} children. The default is {@code 1}.
      *

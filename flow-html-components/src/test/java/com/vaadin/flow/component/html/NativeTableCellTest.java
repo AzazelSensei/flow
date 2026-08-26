@@ -28,6 +28,8 @@ class NativeTableCellTest extends ComponentTest {
     protected void addProperties() {
         addProperty("colspan", int.class, 1, 2, false, false);
         addProperty("rowspan", int.class, 1, 2, false, false);
+        addProperty("headers", String[].class, null, new String[] { "a", "b" },
+                true, true);
     }
 
     @Test
@@ -102,6 +104,63 @@ class NativeTableCellTest extends ComponentTest {
         cell.resetRowspan();
         assertNull(cell.getElement().getAttribute("rowspan"),
                 "Element should not have rowspan attribute");
+    }
+
+    @Test
+    void headers_unsetByDefault() {
+        NativeTableCell cell = (NativeTableCell) getComponent();
+        org.junit.jupiter.api.Assertions
+                .assertTrue(cell.getHeaders().isEmpty());
+    }
+
+    @Test
+    void setHeaders_writesSpaceJoinedAttribute() {
+        NativeTableCell cell = (NativeTableCell) getComponent();
+        cell.setHeaders("name", "age");
+        assertEquals("name age", cell.getElement().getAttribute("headers"),
+                "headers attribute should be space-joined");
+        org.junit.jupiter.api.Assertions.assertArrayEquals(
+                new String[] { "name", "age" },
+                cell.getHeaders().orElseThrow());
+    }
+
+    @Test
+    void setHeaders_emptyClearsAttribute() {
+        NativeTableCell cell = (NativeTableCell) getComponent();
+        cell.setHeaders("name");
+        cell.setHeaders(new String[0]);
+        assertNull(cell.getElement().getAttribute("headers"),
+                "Empty array should clear the attribute");
+        org.junit.jupiter.api.Assertions
+                .assertTrue(cell.getHeaders().isEmpty());
+    }
+
+    @Test
+    void setHeaders_fromHeaderCells_resolvesIds() {
+        NativeTableCell cell = (NativeTableCell) getComponent();
+        NativeTableHeaderCell h1 = new NativeTableHeaderCell("Name");
+        NativeTableHeaderCell h2 = new NativeTableHeaderCell("Age");
+        h1.setId("name-h");
+        h2.setId("age-h");
+        cell.setHeaders(h1, h2);
+        assertEquals("name-h age-h", cell.getElement().getAttribute("headers"),
+                "headers attribute should reference the cells' ids");
+    }
+
+    @Test
+    void setHeaders_fromHeaderCells_throwsIfMissingId() {
+        NativeTableCell cell = (NativeTableCell) getComponent();
+        NativeTableHeaderCell h1 = new NativeTableHeaderCell("Name");
+        // No id set
+        assertThrows(IllegalArgumentException.class, () -> cell.setHeaders(h1));
+    }
+
+    @Test
+    void resetHeaders_removesAttribute() {
+        NativeTableCell cell = (NativeTableCell) getComponent();
+        cell.setHeaders("name");
+        cell.resetHeaders();
+        assertNull(cell.getElement().getAttribute("headers"));
     }
 
 }

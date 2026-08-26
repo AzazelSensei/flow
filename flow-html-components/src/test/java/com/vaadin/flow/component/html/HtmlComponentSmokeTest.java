@@ -79,7 +79,8 @@ class HtmlComponentSmokeTest {
         testValues.put(String[].class, new String[] { "a", "b" });
         testValues.put(Component.class, new Paragraph("Component"));
         testValues.put(HasText.WhiteSpace.class, HasText.WhiteSpace.PRE_LINE);
-        testValues.put(TableHeaderCell.Scope.class, TableHeaderCell.Scope.COL);
+        testValues.put(NativeTableHeaderCell.Scope.class,
+                NativeTableHeaderCell.Scope.COL);
     }
 
     private static final Map<Class<?>, Map<Class<?>, Object>> specialTestValues = new HashMap<>();
@@ -249,21 +250,21 @@ class HtmlComponentSmokeTest {
             return true;
         }
 
-        // NativeTable / Table delegates caption text to the nested <caption>
-        // element
-        if ((method.getDeclaringClass() == NativeTable.class
-                || method.getDeclaringClass() == Table.class)
+        // NativeTable delegates caption text to the nested <caption> element
+        if (method.getDeclaringClass() == NativeTable.class
                 && method.getName().startsWith("setCaptionText")) {
             return true;
         }
 
-        // TableCell.setHeaders has multiple overloads (String..., String list,
-        // TableHeaderCell...). The String[] variant is exercised normally to
+        // AbstractNativeTableCell.setHeaders has multiple overloads (String...,
+        // String list,
+        // NativeTableHeaderCell...). The String[] variant is exercised normally
+        // to
         // cover the bean property; the others have non-matching getter types
         // or no matching getter and are covered by focused unit tests.
-        if (method.getDeclaringClass() == TableCell.class && (method.getName()
-                .equals("setHeadersByCells")
-                || (method.getName().equals("setHeaders")
+        if (method.getDeclaringClass() == AbstractNativeTableCell.class
+                && (method.getName().equals("setHeadersByCells") || (method
+                        .getName().equals("setHeaders")
                         && method.getParameterTypes()[0] != String[].class))) {
             return true;
         }

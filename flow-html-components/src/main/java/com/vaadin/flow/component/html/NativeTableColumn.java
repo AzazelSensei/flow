@@ -21,7 +21,7 @@ import com.vaadin.flow.component.Tag;
 /**
  * Component representing a <code>&lt;col&gt;</code> element — a column (or
  * range of columns, via {@link #setSpan(int)}) inside a
- * {@link TableColumnGroup}. Use it to apply column-wide styling without
+ * {@link NativeTableColumnGroup}. Use it to apply column-wide styling without
  * repeating it on every cell: a class or id on a {@code <col>} can target all
  * the data cells in that column.
  * <p>
@@ -39,14 +39,14 @@ import com.vaadin.flow.component.Tag;
  * @since 25.2
  */
 @Tag(Tag.COL)
-public class TableColumn extends HtmlComponent {
+public class NativeTableColumn extends HtmlComponent {
 
     private static final String ATTRIBUTE_SPAN = "span";
 
     /**
      * Creates a new column component spanning a single column.
      */
-    public TableColumn() {
+    public NativeTableColumn() {
         super();
     }
 
@@ -57,7 +57,7 @@ public class TableColumn extends HtmlComponent {
      *            the number of consecutive columns this {@code <col>} element
      *            applies to. Must be a positive integer.
      */
-    public TableColumn(int span) {
+    public NativeTableColumn(int span) {
         super();
         setSpan(span);
     }

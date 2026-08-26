@@ -15,6 +15,77 @@
  */
 package com.vaadin.flow.component.html;
 
+import java.beans.IntrospectionException;
+import java.lang.reflect.InvocationTargetException;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 public class NativeTableHeaderCellTest extends ComponentTest {
-    // Actual test methods in super class
+    // Most tests in super class
+
+    @BeforeEach
+    @Override
+    void setup() throws IntrospectionException, InstantiationException,
+            IllegalAccessException, ClassNotFoundException,
+            InvocationTargetException, NoSuchMethodException {
+        whitelistProperty("scope");
+        super.setup();
+    }
+
+    @Override
+    protected void addProperties() {
+        super.addProperties();
+        // Inherited from AbstractNativeTableCell — same semantics as
+        // NativeTableCell
+        addProperty("colspan", int.class, 1, 2, false, false);
+        addProperty("rowspan", int.class, 1, 2, false, false);
+        addProperty("headers", String[].class, null, new String[] { "a", "b" },
+                true, true);
+    }
+
+    @Test
+    void scope_unsetByDefault() {
+        NativeTableHeaderCell th = (NativeTableHeaderCell) getComponent();
+        assertTrue(th.getScope().isEmpty());
+    }
+
+    @Test
+    void scope_setAndGet() {
+        NativeTableHeaderCell th = (NativeTableHeaderCell) getComponent();
+        th.setScope(NativeTableHeaderCell.Scope.COL);
+        assertEquals(NativeTableHeaderCell.Scope.COL,
+                th.getScope().orElseThrow());
+        assertEquals("col", th.getElement().getAttribute("scope"));
+    }
+
+    @Test
+    void scope_setNullClearsAttribute() {
+        NativeTableHeaderCell th = (NativeTableHeaderCell) getComponent();
+        th.setScope(NativeTableHeaderCell.Scope.ROW);
+        th.setScope(null);
+        assertTrue(th.getScope().isEmpty());
+        assertEquals(null, th.getElement().getAttribute("scope"));
+    }
+
+    @Test
+    void colspan_inheritedFromTableCell() {
+        NativeTableHeaderCell th = (NativeTableHeaderCell) getComponent();
+        assertEquals(1, th.getColspan());
+        th.setColspan(3);
+        assertEquals(3, th.getColspan());
+        assertEquals("3", th.getElement().getAttribute("colspan"));
+    }
+
+    @Test
+    void rowspan_inheritedFromTableCell() {
+        NativeTableHeaderCell th = (NativeTableHeaderCell) getComponent();
+        assertEquals(1, th.getRowspan());
+        th.setRowspan(2);
+        assertEquals(2, th.getRowspan());
+        assertEquals("2", th.getElement().getAttribute("rowspan"));
+    }
 }

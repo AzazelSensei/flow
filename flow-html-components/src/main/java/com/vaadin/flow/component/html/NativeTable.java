@@ -16,8 +16,10 @@
 package com.vaadin.flow.component.html;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import com.vaadin.flow.component.ClickNotifier;
 import com.vaadin.flow.component.Component;
@@ -25,43 +27,34 @@ import com.vaadin.flow.component.HtmlContainer;
 import com.vaadin.flow.component.Tag;
 
 /**
- * Component representing a <code>&lt;table&gt;</code> element.
+ * Component representing a <code>&lt;table&gt;</code> element — a
+ * two-dimensional grid of cells with optional header, body and footer sections,
+ * captioning and column-level styling.
  * <p>
- * <b>Deprecated.</b> This component extends {@link HtmlContainer} and therefore
- * exposes a generic {@code add(Component)} API that allows constructing
- * structurally invalid tables. Use {@link Table} instead, which extends
- * {@link com.vaadin.flow.component.HtmlComponent} and exposes only
- * spec-compliant operations (see
- * <a href="https://html.spec.whatwg.org/multipage/tables.html">WHATWG
- * HTML</a>).
+ * Per the <a href="https://html.spec.whatwg.org/multipage/tables.html">WHATWG
+ * HTML specification</a>, a <code>&lt;table&gt;</code> may contain (in order):
+ * an optional <code>&lt;caption&gt;</code>, zero or more
+ * <code>&lt;colgroup&gt;</code> elements, an optional
+ * <code>&lt;thead&gt;</code>, zero or more <code>&lt;tbody&gt;</code> elements,
+ * and an optional <code>&lt;tfoot&gt;</code>. Building the table through the
+ * structured operations below places each part at the correct position
+ * automatically; the generic {@link HtmlContainer#add(Component...)} inherited
+ * from {@link HtmlContainer} appends without any such ordering.
  *
+ * @see <a href=
+ *      "https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/table">MDN:
+ *      &lt;table&gt; — The Table element</a>
  * @since 24.5
- * @deprecated since 25.2; use {@link Table} instead.
  */
-@Deprecated
 @Tag(Tag.TABLE)
 public class NativeTable extends HtmlContainer
         implements ClickNotifier<NativeTable> {
 
-    /**
-     * The table's caption.
-     */
-    private NativeTableCaption caption;
-
-    /**
-     * The {@code <thead>} element of this table.
-     */
-    private NativeTableHeader head;
-
-    /**
-     * The list of {@code <tbody>} elements of the table.
-     */
-    private final List<NativeTableBody> bodies = new LinkedList<>();
-
-    /**
-     * The {@code <tfoot>} element of this table.
-     */
-    private NativeTableFooter foot;
+    private static final int RANK_CAPTION = 0;
+    private static final int RANK_COLUMN_GROUP = 1;
+    private static final int RANK_HEAD = 2;
+    private static final int RANK_BODY = 3;
+    private static final int RANK_FOOT = 4;
 
     /**
      * Creates a new empty table.
@@ -77,7 +70,19 @@ public class NativeTable extends HtmlContainer
      *            the children components.
      */
     public NativeTable(Component... components) {
-        super(components);
+        super();
+        add(components);
+    }
+
+    /**
+     * List equivalent of {@link #NativeTable(Component...)}.
+     *
+     * @param components
+     *            the children components.
+     */
+    public NativeTable(List<? extends Component> components) {
+        super();
+        add(components.toArray(Component[]::new));
     }
 
     /**
@@ -87,24 +92,35 @@ public class NativeTable extends HtmlContainer
      * @return the table's caption.
      */
     public NativeTableCaption getCaption() {
-        if (caption == null) {
-            caption = new NativeTableCaption();
-            addComponentAsFirst(caption);
-        }
-        return caption;
+        return findCaption().orElseGet(() -> {
+            NativeTableCaption newCaption = new NativeTableCaption();
+            addComponentAtIndex(insertionIndex(RANK_CAPTION), newCaption);
+            return newCaption;
+        });
     }
 
     /**
-     * Return the caption text for this table.
+     * Returns the caption component if one has been set.
+     *
+     * @return an {@link Optional} containing the caption, or empty if none.
+     */
+    public Optional<NativeTableCaption> findCaption() {
+        return findChild(NativeTableCaption.class);
+    }
+
+    /**
+     * Returns the caption text for this table, or an empty string if no caption
+     * has been set.
      *
      * @return the table's caption text.
      */
     public String getCaptionText() {
-        return getCaption().getText();
+        return findCaption().map(NativeTableCaption::getText).orElse("");
     }
 
     /**
-     * Sets the caption text for this table.
+     * Sets the caption text for this table. Creates a caption element if none
+     * exists.
      *
      * @param text
      *            the caption's text
@@ -114,121 +130,189 @@ public class NativeTable extends HtmlContainer
     }
 
     /**
-     * Remove the caption from this table.
+     * Appends the given components to this table's caption, creating it if none
+     * exists yet. Useful for richer captions containing inline markup.
+     *
+     * @param components
+     *            the components to append.
+     * @return the caption.
      */
-    public void removeCaption() {
-        if (caption != null) {
-            remove(caption);
-            caption = null;
-        }
+    public NativeTableCaption addCaption(Component... components) {
+        return addCaption(Arrays.asList(components));
     }
 
     /**
-     * Returns the head of this table.
+     * List equivalent of {@link #addCaption(Component...)}.
      *
-     * @return This table's {@code <thead>} element. Creates a new one if no
-     *         element was present.
+     * @param components
+     *            the components to append.
+     * @return the caption.
+     */
+    public NativeTableCaption addCaption(List<? extends Component> components) {
+        NativeTableCaption tableCaption = getCaption();
+        tableCaption.add(components.toArray(Component[]::new));
+        return tableCaption;
+    }
+
+    /**
+     * Remove the caption from this table.
+     */
+    public void removeCaption() {
+        findCaption().ifPresent(this::remove);
+    }
+
+    /**
+     * Appends a new empty {@code <colgroup>} to this table.
+     *
+     * @return the newly created column group.
+     */
+    public NativeTableColumnGroup addColumnGroup() {
+        return addColumnGroup(new NativeTableColumnGroup());
+    }
+
+    /**
+     * Appends an existing {@code <colgroup>} to this table.
+     *
+     * @param group
+     *            the column group to add.
+     * @return the same group, for fluent chaining.
+     */
+    public NativeTableColumnGroup addColumnGroup(NativeTableColumnGroup group) {
+        addComponentAtIndex(insertionIndex(RANK_COLUMN_GROUP), group);
+        return group;
+    }
+
+    /**
+     * Appends a new {@code <colgroup>} populated with the given columns.
+     *
+     * @param columns
+     *            the columns to place inside the new group.
+     * @return the newly created column group.
+     */
+    public NativeTableColumnGroup addColumnGroup(NativeTableColumn... columns) {
+        return addColumnGroup(Arrays.asList(columns));
+    }
+
+    /**
+     * List equivalent of {@link #addColumnGroup(NativeTableColumn...)}.
+     *
+     * @param columns
+     *            the columns to place inside the new group.
+     * @return the newly created column group.
+     */
+    public NativeTableColumnGroup addColumnGroup(
+            List<? extends NativeTableColumn> columns) {
+        return addColumnGroup(new NativeTableColumnGroup(columns));
+    }
+
+    /**
+     * Returns the column groups attached to this table, in document order.
+     *
+     * @return an unmodifiable list of column groups.
+     */
+    public List<NativeTableColumnGroup> getColumnGroups() {
+        return childrenOfType(NativeTableColumnGroup.class);
+    }
+
+    /**
+     * Removes a column group from this table.
+     *
+     * @param group
+     *            the group to remove.
+     */
+    public void removeColumnGroup(NativeTableColumnGroup group) {
+        remove(group);
+    }
+
+    /**
+     * Returns the head of this table. Creates a new one if none was present,
+     * inserted at the correct position (after the caption and any column
+     * groups).
+     *
+     * @return this table's {@code <thead>} element.
      */
     public NativeTableHeader getHead() {
-        if (head == null) {
-            head = new NativeTableHeader();
-            int index = caption == null ? 0 : 1;
-            addComponentAtIndex(index, head);
-        }
-        return head;
+        return findHead().orElseGet(() -> {
+            NativeTableHeader newHead = new NativeTableHeader();
+            addComponentAtIndex(insertionIndex(RANK_HEAD), newHead);
+            return newHead;
+        });
+    }
+
+    /**
+     * Returns the head if one has been set.
+     *
+     * @return an {@link Optional} containing the head, or empty if none.
+     */
+    public Optional<NativeTableHeader> findHead() {
+        return findChild(NativeTableHeader.class);
     }
 
     /**
      * Remove the head from this table, if present.
      */
     public void removeHead() {
-        if (head != null) {
-            remove(head);
-            head = null;
-        }
+        findHead().ifPresent(this::remove);
     }
 
     /**
-     * Returns the {@code <tfoot>} element of this table.
+     * Returns the {@code <tfoot>} element of this table. Creates a new one if
+     * none was present, appended at the end of the table per the HTML spec.
      *
-     * @return The {@code <tfoot>} element of this table. Creates a new one if
-     *         none was present.
+     * @return the {@code <tfoot>} element of this table.
      */
     public NativeTableFooter getFoot() {
-        if (foot == null) {
-            foot = new NativeTableFooter();
-            add(foot);
-        }
-        return foot;
+        return findFoot().orElseGet(() -> {
+            NativeTableFooter newFoot = new NativeTableFooter();
+            addComponentAtIndex(insertionIndex(RANK_FOOT), newFoot);
+            return newFoot;
+        });
+    }
+
+    /**
+     * Returns the foot if one has been set.
+     *
+     * @return an {@link Optional} containing the foot, or empty if none.
+     */
+    public Optional<NativeTableFooter> findFoot() {
+        return findChild(NativeTableFooter.class);
     }
 
     /**
      * Removes the foot from this table, if present.
      */
     public void removeFoot() {
-        if (foot != null) {
-            remove(foot);
-            foot = null;
-        }
+        findFoot().ifPresent(this::remove);
     }
 
     /**
      * Returns the list of {@code <tbody>} elements in this table.
      *
-     * @return the list of table body elements of this table.
+     * @return an unmodifiable list of body elements.
      */
     public List<NativeTableBody> getBodies() {
-        return new ArrayList<>(bodies);
+        return childrenOfType(NativeTableBody.class);
     }
 
     /**
      * Returns the first body element in this table. Creates one if there's
      * none.
      *
-     * @return the first {@code <tbody>} element in the table. Creates one if
-     *         there's none.
+     * @return the first {@code <tbody>} element in the table.
      */
     public NativeTableBody getBody() {
-        if (bodies.isEmpty()) {
-            return addBody();
-        }
-        return bodies.get(0);
+        return findChild(NativeTableBody.class).orElseGet(this::addBody);
     }
 
     /**
-     * Returns the {@code <tbody>} element at a given position relative to other
-     * {@code <tbody>} elements.
+     * Adds a new body element to the table, positioned after the existing
+     * bodies and before the foot (if any).
      *
-     * @param index
-     *            The position of the body element relative to other body
-     *            elements.
-     * @return The table body component at the given position. If the position
-     *         is 0 and there are no body elements present, a new one is created
-     *         and returned.
-     */
-    public NativeTableBody getBody(int index) {
-        if (index == 0) {
-            return getBody();
-        }
-        return bodies.get(index);
-    }
-
-    /**
-     * Adds a new body element to the table.
-     *
-     * @return The new body.
+     * @return the new body.
      */
     public NativeTableBody addBody() {
         NativeTableBody body = new NativeTableBody();
-        int index = bodies.size();
-        if (caption != null) {
-            index++;
-        }
-        if (head != null) {
-            index++;
-        }
-        addComponentAtIndex(index, body);
-        bodies.add(body);
+        addComponentAtIndex(insertionIndex(RANK_BODY), body);
         return body;
     }
 
@@ -236,29 +320,250 @@ public class NativeTable extends HtmlContainer
      * Removes a body element from the table.
      *
      * @param body
-     *            The body component to remove.
+     *            the body component to remove.
      */
     public void removeBody(NativeTableBody body) {
         remove(body);
-        bodies.remove(body);
     }
 
     /**
-     * Removes a body element at a given position.
+     * Returns every {@link NativeTableRow} in this table — the head's rows,
+     * then the rows of each body in order, then the foot's rows — matching the
+     * document order exposed by the browser DOM's
+     * {@code HTMLTableElement.rows}. Useful for "iterate all rows" or "count
+     * rows" cases; for structural work go through {@link #getHead()},
+     * {@link #getBody()} or {@link #getFoot()} directly.
      *
-     * @param index
-     *            The position of the body element to remove.
+     * @return an unmodifiable list of all rows in the table.
      */
-    public void removeBody(int index) {
-        NativeTableBody body = getBody(index);
-        removeBody(body);
+    public List<NativeTableRow> getRows() {
+        List<NativeTableRow> all = new ArrayList<>();
+        findHead().ifPresent(head -> all.addAll(head.getRows()));
+        getBodies().forEach(body -> all.addAll(body.getRows()));
+        findFoot().ifPresent(foot -> all.addAll(foot.getRows()));
+        return Collections.unmodifiableList(all);
     }
 
     /**
-     * Removes the first body element in the list of bodies of this table.
+     * Removes every row from this table's head, bodies and foot. The section
+     * elements themselves ({@code <thead>}, {@code <tbody>}, {@code <tfoot>})
+     * and any column groups are kept; use {@link #removeHead()},
+     * {@link #removeBody(NativeTableBody)} or {@link #removeFoot()} to drop
+     * those.
      */
-    public void removeBody() {
-        removeBody(0);
+    public void removeAllRows() {
+        findHead().ifPresent(NativeTableHeader::removeAllRows);
+        getBodies().forEach(NativeTableBody::removeAllRows);
+        findFoot().ifPresent(NativeTableFooter::removeAllRows);
+    }
+
+    /**
+     * Appends a new empty row to this table's body, creating an implicit
+     * {@code <tbody>} if none exists yet. Mirrors the HTML pattern of placing
+     * <code>&lt;tr&gt;</code> elements directly inside a
+     * <code>&lt;table&gt;</code> (the browser auto-wraps them in
+     * {@code <tbody>}).
+     *
+     * @return the newly created row.
+     */
+    public NativeTableRow addRow() {
+        return getBody().addRow();
+    }
+
+    /**
+     * Appends a new row containing the given texts as data cells
+     * (<code>&lt;td&gt;</code>) to this table's body, creating an implicit
+     * {@code <tbody>} if none exists yet.
+     *
+     * @param cellTexts
+     *            the text content for each data cell.
+     * @return the newly created row.
+     */
+    public NativeTableRow addRow(String... cellTexts) {
+        return addRow(Arrays.asList(cellTexts));
+    }
+
+    /**
+     * List equivalent of {@link #addRow(String...)}.
+     *
+     * @param cellTexts
+     *            the text content for each data cell.
+     * @return the newly created row.
+     */
+    public NativeTableRow addRow(List<String> cellTexts) {
+        return getBody().addRow().addDataCells(cellTexts);
+    }
+
+    /**
+     * Appends the given rows to this table's body, creating an implicit
+     * {@code <tbody>} if none exists yet.
+     *
+     * @param rows
+     *            the rows to add.
+     */
+    public void addRows(NativeTableRow... rows) {
+        getBody().addRows(rows);
+    }
+
+    /**
+     * List equivalent of {@link #addRows(NativeTableRow...)}.
+     *
+     * @param rows
+     *            the rows to add.
+     */
+    public void addRows(List<? extends NativeTableRow> rows) {
+        getBody().addRows(rows);
+    }
+
+    /**
+     * Appends a new empty row to this table's {@code <thead>}, creating it if
+     * none exists yet.
+     *
+     * @return the newly created row.
+     */
+    public NativeTableRow addHeaderRow() {
+        return getHead().addRow();
+    }
+
+    /**
+     * Appends a new row containing the given texts as header cells
+     * (<code>&lt;th&gt;</code>) to this table's {@code <thead>}, creating it if
+     * none exists yet.
+     *
+     * @param cellTexts
+     *            the text content for each header cell.
+     * @return the newly created row.
+     */
+    public NativeTableRow addHeaderRow(String... cellTexts) {
+        return addHeaderRow(Arrays.asList(cellTexts));
+    }
+
+    /**
+     * List equivalent of {@link #addHeaderRow(String...)}.
+     *
+     * @param cellTexts
+     *            the text content for each header cell.
+     * @return the newly created row.
+     */
+    public NativeTableRow addHeaderRow(List<String> cellTexts) {
+        return getHead().addRow().addHeaderCells(cellTexts);
+    }
+
+    /**
+     * Appends the given rows to this table's {@code <thead>}, creating it if
+     * none exists yet.
+     *
+     * @param rows
+     *            the rows to add.
+     */
+    public void addHeaderRows(NativeTableRow... rows) {
+        getHead().addRows(rows);
+    }
+
+    /**
+     * List equivalent of {@link #addHeaderRows(NativeTableRow...)}.
+     *
+     * @param rows
+     *            the rows to add.
+     */
+    public void addHeaderRows(List<? extends NativeTableRow> rows) {
+        getHead().addRows(rows);
+    }
+
+    /**
+     * Appends a new empty row to this table's {@code <tfoot>}, creating it if
+     * none exists yet.
+     *
+     * @return the newly created row.
+     */
+    public NativeTableRow addFooterRow() {
+        return getFoot().addRow();
+    }
+
+    /**
+     * Appends a new row containing the given texts as data cells
+     * (<code>&lt;td&gt;</code>) to this table's {@code <tfoot>}, creating it if
+     * none exists yet.
+     *
+     * @param cellTexts
+     *            the text content for each data cell.
+     * @return the newly created row.
+     */
+    public NativeTableRow addFooterRow(String... cellTexts) {
+        return addFooterRow(Arrays.asList(cellTexts));
+    }
+
+    /**
+     * List equivalent of {@link #addFooterRow(String...)}.
+     *
+     * @param cellTexts
+     *            the text content for each data cell.
+     * @return the newly created row.
+     */
+    public NativeTableRow addFooterRow(List<String> cellTexts) {
+        return getFoot().addRow().addDataCells(cellTexts);
+    }
+
+    /**
+     * Appends the given rows to this table's {@code <tfoot>}, creating it if
+     * none exists yet.
+     *
+     * @param rows
+     *            the rows to add.
+     */
+    public void addFooterRows(NativeTableRow... rows) {
+        getFoot().addRows(rows);
+    }
+
+    /**
+     * List equivalent of {@link #addFooterRows(NativeTableRow...)}.
+     *
+     * @param rows
+     *            the rows to add.
+     */
+    public void addFooterRows(List<? extends NativeTableRow> rows) {
+        getFoot().addRows(rows);
+    }
+
+    private <T extends Component> Optional<T> findChild(Class<T> type) {
+        return getChildren().filter(type::isInstance).map(type::cast)
+                .findFirst();
+    }
+
+    private <T extends Component> List<T> childrenOfType(Class<T> type) {
+        return getChildren().filter(type::isInstance).map(type::cast).toList();
+    }
+
+    /**
+     * Returns the index at which a child of the given rank must be inserted to
+     * keep the caption, column groups, head, bodies and foot in the order the
+     * HTML specification requires: right after the last child of the same or a
+     * lower rank.
+     */
+    private int insertionIndex(int rank) {
+        List<Component> children = getChildren().toList();
+        for (int i = 0; i < children.size(); i++) {
+            if (rank(children.get(i)) > rank) {
+                return i;
+            }
+        }
+        return children.size();
+    }
+
+    private static int rank(Component child) {
+        if (child instanceof NativeTableCaption) {
+            return RANK_CAPTION;
+        }
+        if (child instanceof NativeTableColumnGroup) {
+            return RANK_COLUMN_GROUP;
+        }
+        if (child instanceof NativeTableHeader) {
+            return RANK_HEAD;
+        }
+        if (child instanceof NativeTableFooter) {
+            return RANK_FOOT;
+        }
+        return RANK_BODY;
     }
 
 }
