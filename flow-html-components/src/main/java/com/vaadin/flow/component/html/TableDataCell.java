@@ -35,9 +35,6 @@ import com.vaadin.flow.signals.Signal;
 public class TableDataCell extends TableCell
         implements ClickNotifier<TableDataCell> {
 
-    private static final String ATTRIBUTE_COLSPAN = "colspan";
-    private static final String ATTRIBUTE_ROWSPAN = "rowspan";
-
     /**
      * Creates a new empty data cell.
      */
@@ -76,72 +73,5 @@ public class TableDataCell extends TableCell
     public TableDataCell(Signal<String> textSignal) {
         Objects.requireNonNull(textSignal, "textSignal must not be null");
         bindText(textSignal);
-    }
-
-    /**
-     * Sets the {@code colspan} attribute — how many columns this cell spans.
-     * The default is {@code 1}.
-     *
-     * @param colspan
-     *            a non-negative integer.
-     */
-    public void setColspan(int colspan) {
-        setSpan(ATTRIBUTE_COLSPAN, colspan);
-    }
-
-    /**
-     * Returns the value of the {@code colspan} attribute.
-     *
-     * @return the current colspan. Default is 1.
-     */
-    public int getColspan() {
-        return getSpan(ATTRIBUTE_COLSPAN);
-    }
-
-    /**
-     * Resets the colspan to its default value of 1.
-     */
-    public void resetColspan() {
-        getElement().removeAttribute(ATTRIBUTE_COLSPAN);
-    }
-
-    /**
-     * Sets the {@code rowspan} attribute — how many rows this cell spans. The
-     * default is {@code 1}.
-     *
-     * @param rowspan
-     *            a non-negative integer.
-     */
-    public void setRowspan(int rowspan) {
-        setSpan(ATTRIBUTE_ROWSPAN, rowspan);
-    }
-
-    /**
-     * Returns the value of the {@code rowspan} attribute.
-     *
-     * @return the current rowspan. Default is 1.
-     */
-    public int getRowspan() {
-        return getSpan(ATTRIBUTE_ROWSPAN);
-    }
-
-    /**
-     * Resets the rowspan to its default value of 1.
-     */
-    public void resetRowspan() {
-        getElement().removeAttribute(ATTRIBUTE_ROWSPAN);
-    }
-
-    private void setSpan(String attribute, int span) {
-        if (span < 0) {
-            throw new IllegalArgumentException(
-                    attribute + " must be a non-negative integer value");
-        }
-        getElement().setAttribute(attribute, String.valueOf(span));
-    }
-
-    private int getSpan(String attribute) {
-        String span = getElement().getAttribute(attribute);
-        return span == null ? 1 : Integer.parseInt(span);
     }
 }
