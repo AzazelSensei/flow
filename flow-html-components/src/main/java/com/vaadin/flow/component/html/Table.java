@@ -182,6 +182,18 @@ public class Table extends HtmlComponent implements ClickNotifier<Table> {
     }
 
     /**
+     * List equivalent of {@link #addColumnGroup(TableColumn...)}.
+     *
+     * @param columns
+     *            the columns the new group should hold.
+     * @return the new column group.
+     */
+    public TableColumnGroup addColumnGroup(
+            List<? extends TableColumn> columns) {
+        return addColumnGroup(new TableColumnGroup(columns));
+    }
+
+    /**
      * Returns the column groups of this table, in document order.
      *
      * @return the table's {@code <colgroup>} elements.
